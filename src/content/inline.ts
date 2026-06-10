@@ -1,5 +1,5 @@
 import { formatPrice, priceChange } from "../core/history";
-import { sparklinePath } from "../shared/sparkline";
+import { CHART_VIEWBOX, priceChart } from "../shared/chart";
 import type { TrackedListing } from "../shared/types";
 
 // Inline styles: the panel can live inside finn's shadow roots where
@@ -19,21 +19,15 @@ export function renderInlineHistory(listing: TrackedListing): void {
   panel.id = "torgvakt-history";
   panel.style.cssText = PANEL_STYLE;
 
-  const prices = listing.history.map((p) => p.price);
-  const min = Math.min(...prices);
-  const max = Math.max(...prices);
   const change = priceChange(listing.history);
   const changeText = change
-    ? `${change.abs < 0 ? "-" : "+"}${formatPrice(Math.abs(change.abs))} (${change.pct}%) siden du begynte å følge`
-    : "Ingen prisendring registrert ennå";
+    ? `${change.abs < 0 ? "Prisen er satt ned" : "Prisen er satt opp"} ${formatPrice(Math.abs(change.abs))} (${change.pct}%) siden du begynte å følge`
+    : "Ingen prisendring siden du begynte å følge";
 
   panel.innerHTML = `
     <div style="${TITLE_STYLE}">Torgvakt prishistorikk</div>
-    <svg viewBox="0 0 120 32" width="240" height="64" aria-hidden="true">
-      <path d="${sparklinePath(listing.history)}" fill="none" stroke="#e8b13f" stroke-width="2"/>
-    </svg>
+    <svg viewBox="${CHART_VIEWBOX}" width="264" height="96" aria-hidden="true">${priceChart(listing.history, Date.now())}</svg>
     <div style="${META_STYLE}">${changeText}</div>
-    <div style="${META_STYLE}">Lavest: ${formatPrice(min)} / Høyest: ${formatPrice(max)} / ${listing.history.length} punkt</div>
   `;
   btn.insertAdjacentElement("afterend", panel);
 }

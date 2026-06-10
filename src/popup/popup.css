@@ -7,7 +7,8 @@ h1 { font-size: 16px; margin: 0; color: #e8b13f; }
 .tv-item img, .tv-noimg { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; background: #23262e; flex: none; }
 .tv-mid { flex: 1; min-width: 0; }
 .tv-mid a { color: #e6e9ef; text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tv-priceline { display: flex; gap: 8px; align-items: baseline; }
+.tv-priceline { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.tv-priceline strong { white-space: nowrap; }
 .tv-change.tv-down { color: #5fbf77; }
 .tv-change.tv-up { color: #d96c6c; }
 .tv-badge { background: #3a3f4b; border-radius: 4px; padding: 1px 6px; font-size: 11px; white-space: nowrap; }

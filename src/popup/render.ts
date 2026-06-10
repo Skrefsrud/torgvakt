@@ -1,5 +1,5 @@
 import { formatPrice, priceChange } from "../core/history";
-import { sparklinePath } from "../shared/sparkline";
+import { sparklinePath, sparklinePoints } from "../shared/sparkline";
 import type { ListingStatus, TrackedListing } from "../shared/types";
 
 export function statusLabel(status: ListingStatus): string {
@@ -46,7 +46,10 @@ export function renderListingItem(l: TrackedListing): string {
       </div>
     </div>
     <svg viewBox="0 0 120 32" width="90" height="24" aria-hidden="true">
-      <path d="${sparklinePath(l.history)}" fill="none" stroke="#e8b13f" stroke-width="2"/>
+      <path d="${sparklinePath(l.history, 120, 32, 3, Date.now())}" fill="none" stroke="#e8b13f" stroke-width="2"/>
+      ${sparklinePoints(l.history, 120, 32, 3, Date.now())
+        .map((pt) => `<circle cx="${pt.x.toFixed(1)}" cy="${pt.y.toFixed(1)}" r="2.5" fill="#e8b13f"/>`)
+        .join("")}
     </svg>
     <button class="tv-remove" data-id="${esc(l.id)}" title="Slutt å følge">✕</button>
   </li>`;
