@@ -75,6 +75,47 @@ export function parseDisposed(html: string, id: string): { disposed: true; text:
   return { disposed: true, text };
 }
 
+// Page titles carry the real headline as "<title> | FINN-torget" / "| FINN MC" etc.
+export function stripFinnSuffix(title: string): string {
+  return title.replace(/\s*\|\s*FINN[^|]*$/i, "").trim();
+}
+
+function ogTitle(html: string): string {
+  const m = html.match(/<meta\s+property="og:title"\s+content="([^"]*)"/);
+  return m ? stripFinnSuffix(m[1]) : "";
+}
+
+// finn sometimes mangles emoji in JSON-LD names as literal \u{d83d}\u{dd25}
+function decodeMangledUnicode(s: string): string {
+  return s.replace(/\\u\{([0-9a-f]{1,6})\}/gi, (_, hex: string) => {
+    const code = parseInt(hex, 16);
+    return code > 0xffff ? String.fromCodePoint(code) : String.fromCharCode(code);
+  });
+}
+
+function bestTitle(ldName: string | undefined, html: string): string {
+  const name = decodeMangledUnicode(ldName ?? "");
+  const og = ogTitle(html);
+  // mobility sometimes puts a generic make ("Andre") in name; the headline is in og:title
+  if (og && name.length < 6 && og.length > name.length) return og;
+  return name || og;
+}
+
+const AD_ID_RE = /\\?"adId\\?":\\?"?(\d+)/;
+const PRICE_TEXT_RE = /\\?"priceText\\?":\s*\\?"([^"\\]+)/;
+
+// Some finn SSR variants ship no Product JSON-LD at all but carry the price in
+// the hydration payload next to the page's own adId.
+function parseHydrationFallback(html: string): ParsedListing | null {
+  const idMatch = AD_ID_RE.exec(html);
+  if (!idMatch) return null;
+  const window = html.slice(Math.max(0, idMatch.index - SCOPE), idMatch.index + SCOPE);
+  const priceMatch = PRICE_TEXT_RE.exec(window);
+  const price = priceMatch ? toPrice(priceMatch[1].replace(/kr/gi, "").trim()) : null;
+  if (price === null) return null;
+  return { id: idMatch[1], title: bestTitle(undefined, html), image: "", price, availability: "unknown" };
+}
+
 export function parseListingHtml(html: string): ParsedListing | null {
   for (const m of html.matchAll(LD_JSON_RE)) {
     let data: unknown;
@@ -89,7 +130,7 @@ export function parseListingHtml(html: string): ParsedListing | null {
     const avail = offer?.availability ?? "";
     return {
       id: p.sku ?? "",
-      title: p.name ?? "",
+      title: bestTitle(p.name, html),
       image: toImage(p.image),
       price: toPrice(offer?.price),
       availability: avail.includes("InStock")
@@ -99,7 +140,9 @@ export function parseListingHtml(html: string): ParsedListing | null {
           : "unknown",
     };
   }
-  const og = html.match(/<meta\s+property="og:title"\s+content="([^"]*)"/);
-  if (og) return { id: "", title: og[1], image: "", price: null, availability: "unknown" };
+  const hydration = parseHydrationFallback(html);
+  if (hydration) return hydration;
+  const og = ogTitle(html);
+  if (og) return { id: "", title: og, image: "", price: null, availability: "unknown" };
   return null;
 }

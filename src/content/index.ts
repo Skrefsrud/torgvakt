@@ -1,9 +1,9 @@
-import { parseListingHtml } from "../core/parse";
+import { parseDisposed, parseListingHtml } from "../core/parse";
 import { listingIdFromPath } from "../core/listingId";
 import { canTrack } from "../core/limits";
 import { getTracked, trackListing, untrackListing } from "../shared/storage";
 import type { ParsedListing, TrackedListing } from "../shared/types";
-import { findPriceElement } from "./dom";
+import { domFallbackListing, findDisposedBadge, findPriceElement } from "./dom";
 import { renderInlineHistory } from "./inline";
 
 // The button often lands inside finn's shadow roots where content-script CSS
@@ -15,10 +15,21 @@ const BTN_FLOAT =
   "position:fixed;right:16px;bottom:16px;z-index:99999;box-shadow:0 2px 8px rgba(0,0,0,0.35);";
 
 async function main(): Promise<void> {
-  const parsed = parseListingHtml(document.documentElement.outerHTML);
+  const html = document.documentElement.outerHTML;
+  const urlId = listingIdFromPath(location.pathname);
+  // Sold/expired pages sometimes keep stale InStock JSON-LD; never offer
+  // tracking on a disposed page. Two signals: hydration marker (when visible
+  // to outerHTML) and the rendered Solgt badge (shadow DOM).
+  if (urlId && parseDisposed(html, urlId)) return;
+  if (findDisposedBadge(document)) return;
+  let parsed = parseListingHtml(html);
+  if (!parsed || parsed.price === null) {
+    // outerHTML misses shadow-rooted hydration scripts; read the visible DOM
+    parsed = domFallbackListing(urlId, findPriceElement(document)?.textContent ?? null, document.title);
+  }
   if (!parsed || parsed.price === null) return;
   // Mobility listings have no sku in their JSON-LD; the URL is canonical there.
-  parsed.id = parsed.id || listingIdFromPath(location.pathname);
+  parsed.id = parsed.id || urlId;
   if (!parsed.id) return;
   const tracked = await getTracked();
   renderButton(parsed, parsed.id in tracked);

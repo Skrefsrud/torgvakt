@@ -19,18 +19,17 @@ export function applyFetchResult(
   }
   if (httpStatus < 200 || httpStatus >= 300 || html === null) return null;
 
-  const parsed = parseListingHtml(html);
-  if (!parsed || parsed.price === null) {
-    const disposed = parseDisposed(html, listing.id);
-    if (disposed) {
-      listing.status = /solgt/i.test(disposed.text) ? "sold" : "removed";
-      return settings.notifyAll
-        ? listing.status === "sold"
-          ? "Annonsen er markert som solgt"
-          : "Annonsen er fjernet"
-        : null;
-    }
+  // Disposed marker first: sold pages can still carry stale InStock JSON-LD.
+  const disposed = parseDisposed(html, listing.id);
+  if (disposed) {
+    listing.status = /solgt/i.test(disposed.text) ? "sold" : "removed";
+    return settings.notifyAll
+      ? listing.status === "sold"
+        ? "Annonsen er markert som solgt"
+        : "Annonsen er fjernet"
+      : null;
   }
+  const parsed = parseListingHtml(html);
   if (!parsed) {
     listing.status = "parseError";
     return null;
