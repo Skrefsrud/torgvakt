@@ -1,5 +1,5 @@
 import { appendIfChanged, formatPrice } from "./history";
-import { parseListingHtml } from "./parse";
+import { parseDisposed, parseListingHtml } from "./parse";
 import type { Settings, TrackedListing } from "../shared/types";
 
 /**
@@ -20,6 +20,17 @@ export function applyFetchResult(
   if (httpStatus < 200 || httpStatus >= 300 || html === null) return null;
 
   const parsed = parseListingHtml(html);
+  if (!parsed || parsed.price === null) {
+    const disposed = parseDisposed(html);
+    if (disposed) {
+      listing.status = /solgt/i.test(disposed.text) ? "sold" : "removed";
+      return settings.notifyAll
+        ? listing.status === "sold"
+          ? "Annonsen er markert som solgt"
+          : "Annonsen er fjernet"
+        : null;
+    }
+  }
   if (!parsed) {
     listing.status = "parseError";
     return null;

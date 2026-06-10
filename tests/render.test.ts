@@ -23,6 +23,11 @@ test("status labels", () => {
   expect(statusLabel("parseError")).toBe("Lesefeil");
 });
 
+test("shows relist badge when listing was rebound", () => {
+  const html = renderListingItem({ ...base, relistedFrom: ["99"] });
+  expect(html).toContain("Lagt ut på nytt");
+});
+
 test("escapes html in titles", () => {
   const html = renderListingItem({ ...base, title: "<img onerror=x>" });
   expect(html).not.toContain("<img onerror");

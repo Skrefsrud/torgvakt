@@ -17,3 +17,4 @@ h1 { font-size: 16px; margin: 0; color: #e8b13f; }
 #tv-empty { padding: 16px 14px; color: #7c8494; }
 #tv-settings { border-top: 1px solid #23262e; padding: 10px 14px 14px; display: grid; gap: 6px; }
 #tv-settings select { margin-left: 6px; background: #23262e; color: #e6e9ef; border: 1px solid #3a3f4b; border-radius: 4px; }
+.tv-badge.tv-relist { background: #4a3f1f; color: #e8b13f; }

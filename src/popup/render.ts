@@ -26,6 +26,7 @@ export function renderListingItem(l: TrackedListing): string {
         <strong>${formatPrice(current.price)}</strong>
         ${changeHtml}
         ${badge ? `<span class="tv-badge">${badge}</span>` : ""}
+        ${l.relistedFrom?.length ? `<span class="tv-badge tv-relist">Lagt ut på nytt</span>` : ""}
       </div>
     </div>
     <svg viewBox="0 0 120 32" width="90" height="24" aria-hidden="true">

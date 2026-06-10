@@ -33,6 +33,17 @@ function toPrice(raw: string | number | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+// Expired/sold listings return HTTP 200 without Product JSON-LD; the hydration
+// payload carries disposed:true (sometimes escaped inside a JSON string).
+const DISPOSED_RE = /\\?"disposed\\?":\s*true/;
+const DISPOSED_TEXT_RE = /\\?"disposedText\\?":\s*\\?"([^"\\]+)\\?"/;
+
+export function parseDisposed(html: string): { disposed: true; text: string } | null {
+  if (!DISPOSED_RE.test(html)) return null;
+  const text = html.match(DISPOSED_TEXT_RE)?.[1] ?? "";
+  return { disposed: true, text };
+}
+
 export function parseListingHtml(html: string): ParsedListing | null {
   for (const m of html.matchAll(LD_JSON_RE)) {
     let data: unknown;

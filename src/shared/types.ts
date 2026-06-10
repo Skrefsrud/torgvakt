@@ -13,6 +13,10 @@ export interface TrackedListing {
   addedAt: number;
   status: ListingStatus;
   history: PricePoint[];
+  /** Set when the listing leaves the active state; bounds the relist search window. */
+  removedAt?: number;
+  /** Previous listing ids this entry was rebound from (delete-and-repost chain). */
+  relistedFrom?: string[];
 }
 
 export interface Settings {
