@@ -17,3 +17,14 @@
   z-index: 99999;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
+#torgvakt-history {
+  font: 12px/1.5 system-ui, sans-serif;
+  color: #c7cdd8;
+  background: #16181d;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 4px 0 8px;
+  max-width: 280px;
+}
+#torgvakt-history .torgvakt-h-title { font-weight: 700; color: #e8b13f; margin-bottom: 4px; }
+#torgvakt-history .torgvakt-h-meta { margin-top: 4px; }
