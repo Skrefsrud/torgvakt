@@ -12,3 +12,4 @@ chrome.storage. Nothing is sent to the developer or any third party. The
 extension only contacts finn.no, and only to fetch the listings you chose to track.
 
 Kontakt / contact: g.skrefsrud@gmail.com
+Kildekode / source code: https://github.com/Skrefsrud/torgvakt
