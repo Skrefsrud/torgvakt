@@ -31,6 +31,22 @@ test("returns null on garbage", () => {
   expect(parseListingHtml("<html><body>hei</body></html>")).toBeNull();
 });
 
+test("handles offers as an array (valid schema.org shape)", () => {
+  const html = `<script type="application/ld+json">{"@type":"Product","sku":"7","name":"X","offers":[{"price":"750","availability":"https://schema.org/InStock"}]}</script>`;
+  const p = parseListingHtml(html)!;
+  expect(p.price).toBe(750);
+  expect(p.availability).toBe("InStock");
+});
+
+test("parses Norwegian price formats: dotted thousands and decimal comma", () => {
+  const mk = (price: string) =>
+    `<script type="application/ld+json">{"@type":"Product","sku":"7","name":"X","offers":{"price":"${price}"}}</script>`;
+  expect(parseListingHtml(mk("43.000"))!.price).toBe(43000);
+  expect(parseListingHtml(mk("1.234,56"))!.price).toBe(1234.56);
+  expect(parseListingHtml(mk("1 234"))!.price).toBe(1234);
+  expect(parseListingHtml(mk("0"))!.price).toBe(0);
+});
+
 test("handles Product nested in @graph and array images", () => {
   const html = `<script type="application/ld+json">{"@graph":[{"@type":"Product","sku":"123","name":"X","image":["https://a/b.jpg"],"offers":{"price":"1 234","availability":"https://schema.org/InStock"}}]}</script>`;
   const p = parseListingHtml(html)!;

@@ -8,11 +8,20 @@ const activeHtml = readFileSync("tests/fixtures/listing-active.html", "utf-8");
 const settings: Settings = { checkIntervalHours: 6, notifyDrops: true, notifyAll: false };
 
 test("parseDisposed detects the disposed marker on a real expired page", () => {
-  expect(parseDisposed(disposedHtml)).toEqual({ disposed: true, text: "Solgt" });
+  expect(parseDisposed(disposedHtml, "400000000")).toEqual({ disposed: true, text: "Solgt" });
 });
 
-test("parseDisposed is null on a live listing", () => {
-  expect(parseDisposed(activeHtml)).toBeNull();
+test("parseDisposed is null on a live listing (which carries disposed:false)", () => {
+  expect(parseDisposed(activeHtml, "466564665")).toBeNull();
+});
+
+test("a foreign disposed:true elsewhere in the page does not poison the result", () => {
+  const poisoned = activeHtml + `<script>{"adId":"999999999","disposed":true,"disposedText":"Solgt"}</script>`;
+  expect(parseDisposed(poisoned, "466564665")).toBeNull();
+});
+
+test("parseDisposed is null when the page lacks the listing's own adId", () => {
+  expect(parseDisposed("<html>{\"disposed\":true}</html>", "123")).toBeNull();
 });
 
 test("HTTP 200 disposed page marks listing sold, not parseError", () => {

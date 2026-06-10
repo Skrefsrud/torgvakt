@@ -37,7 +37,7 @@ export function renderListingItem(l: TrackedListing): string {
   <li class="tv-item ${l.status !== "active" ? "tv-inactive" : ""}">
     ${typeof l.image === "string" && l.image ? `<img src="${esc(l.image)}" alt="">` : `<div class="tv-noimg"></div>`}
     <div class="tv-mid">
-      <a href="${esc(l.url)}" target="_blank" rel="noreferrer">${esc(l.title)}</a>
+      <a href="${esc(typeof l.url === "string" && l.url.startsWith("https://www.finn.no/") ? l.url : "https://www.finn.no/")}" target="_blank" rel="noreferrer">${esc(l.title)}</a>
       <div class="tv-priceline">
         <strong>${formatPrice(current.price)}</strong>
         ${changeHtml}

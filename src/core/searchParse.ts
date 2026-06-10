@@ -7,6 +7,7 @@ export interface SearchItem {
 }
 
 import { ITEM_PATH_RE } from "./listingId";
+import { firstOffer, toPrice, type LdOffer } from "./parse";
 
 const LD_JSON_RE = /<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/g;
 
@@ -15,14 +16,8 @@ interface LdListItem {
     name?: string;
     url?: string;
     image?: string | string[];
-    offers?: { price?: string | number };
+    offers?: LdOffer | LdOffer[];
   };
-}
-
-function toPrice(raw: string | number | undefined): number | null {
-  if (raw === undefined || raw === null || raw === "") return null;
-  const n = typeof raw === "number" ? raw : Number(raw.replace(/[\s  ]/g, ""));
-  return Number.isFinite(n) ? n : null;
 }
 
 /** Extracts listing candidates from a finn.no search results page. */
@@ -42,7 +37,7 @@ export function parseSearchHtml(html: string): SearchItem[] {
       const p = el.item;
       if (!p?.url || !p.name) continue;
       const idMatch = p.url.match(ITEM_PATH_RE);
-      const price = toPrice(p.offers?.price);
+      const price = toPrice(firstOffer(p.offers)?.price);
       if (!idMatch || price === null) continue;
       items.push({
         id: idMatch[1],

@@ -21,7 +21,7 @@ export function applyFetchResult(
 
   const parsed = parseListingHtml(html);
   if (!parsed || parsed.price === null) {
-    const disposed = parseDisposed(html);
+    const disposed = parseDisposed(html, listing.id);
     if (disposed) {
       listing.status = /solgt/i.test(disposed.text) ? "sold" : "removed";
       return settings.notifyAll

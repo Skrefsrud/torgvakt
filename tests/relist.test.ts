@@ -39,6 +39,24 @@ test("rejects price far outside plausible relist range", () => {
   expect(findRelistMatch(lost, [item("3", "Kona El Kahuna elsykkel", 25000)])).toBeNull();
 });
 
+test("keeps digit-bearing short tokens: iPhone 13 never matches iPhone 14", () => {
+  expect(titleSimilarity("iPhone 13", "iPhone 14")).toBeLessThan(1);
+  const lost = { id: "1", title: "iPhone 13", lastPrice: 4000 };
+  expect(findRelistMatch(lost, [item("2", "iPhone 14", 4000)])).toBeNull();
+});
+
+test("conflicting digit tokens veto a match even with high similarity", () => {
+  const lost = { id: "1", title: "iPhone 13 128GB", lastPrice: 4000 };
+  expect(findRelistMatch(lost, [item("2", "iPhone 14 128GB", 4000)])).toBeNull();
+  // same model relisted: digits agree, match allowed
+  expect(findRelistMatch(lost, [item("3", "iPhone 13 128GB pent", 3800)])?.id).toBe("3");
+});
+
+test("dropping a year from the title does not veto (no conflicting digits)", () => {
+  const lost = { id: "1", title: "Kona El Kahuna elsykkel 2022", lastPrice: 10000 };
+  expect(findRelistMatch(lost, [item("2", "Kona El Kahuna elsykkel", 9500)])?.id).toBe("2");
+});
+
 test("requires at least two shared tokens unless similarity is perfect", () => {
   const lost = { id: "1", title: "Kona El Kahuna elsykkel rask", lastPrice: 1000 };
   // only one shared informative token ("elsykkel"), similarity < 1 -> no match

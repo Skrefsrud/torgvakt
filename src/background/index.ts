@@ -12,12 +12,19 @@ const RELIST_WINDOW_MS = 7 * 24 * 3600 * 1000;
 
 async function scheduleAlarm(): Promise<void> {
   const settings = await getSettings();
-  await chrome.alarms.clear(ALARM);
+  // create() with the same name replaces the existing alarm; no clear() needed
+  // (clear-then-create could leave NO alarm if create fails).
   chrome.alarms.create(ALARM, {
     periodInMinutes: settings.checkIntervalHours * 60,
     delayInMinutes: 1,
   });
 }
+
+// Self-healing: Chrome drops alarms on extension disable/enable, which fires
+// neither onInstalled nor onStartup. Re-arm on every service worker wake.
+void chrome.alarms.get(ALARM).then((a) => {
+  if (!a) void scheduleAlarm();
+});
 
 chrome.runtime.onInstalled.addListener(() => void scheduleAlarm());
 chrome.runtime.onStartup.addListener(() => void scheduleAlarm());
@@ -34,36 +41,57 @@ function isDead(l: TrackedListing): boolean {
   return l.status === "sold" || l.status === "removed";
 }
 
+/** Merge one cycle step into a FRESH storage read (user may act mid-cycle). */
+async function persistOps(ops: CycleOps): Promise<void> {
+  const fresh = await getTracked();
+  await saveTracked(applyCycleOps(fresh, ops));
+}
+
 async function runCheck(): Promise<void> {
   const snapshot = await getTracked();
   const settings = await getSettings();
-  const ops: CycleOps = { updates: [], rebinds: [] };
+  // ids claimed by a rebind this cycle: two dead duplicates must not adopt
+  // the same candidate
+  const claimed = new Set<string>(Object.keys(snapshot));
   for (const listing of Object.values(snapshot)) {
     const checkable = listing.status === "active" || listing.status === "parseError";
     const relistWindowOpen =
       listing.removedAt !== undefined && Date.now() - listing.removedAt < RELIST_WINDOW_MS;
     if (!checkable && !(isDead(listing) && relistWindowOpen)) continue;
     try {
+      let msg: string | null = null;
       if (checkable) {
         const res = await fetch(listing.url, { credentials: "omit" });
         const html = res.ok ? await res.text() : null;
-        const msg = applyFetchResult(listing, res.status, html, settings, Date.now());
-        if (msg) notify(listing.id, listing.title, msg);
+        msg = applyFetchResult(listing, res.status, html, settings, Date.now());
         if (isDead(listing) && listing.removedAt === undefined) listing.removedAt = Date.now();
       }
-      const rebind = isDead(listing) ? await attemptRelist(listing, snapshot, settings) : null;
-      if (rebind) ops.rebinds.push(rebind);
-      else ops.updates.push(listing);
+      const rebind = isDead(listing) ? await attemptRelist(listing, claimed, settings) : null;
+      // Persist each step immediately: a dying service worker must not lose
+      // the whole cycle, and notifications must never precede their data.
+      if (rebind) {
+        claimed.add(rebind.op.listing.id);
+        await persistOps({ updates: [], rebinds: [rebind.op] });
+        if (rebind.message) notify(rebind.op.listing.id, rebind.op.listing.title, rebind.message);
+      } else {
+        await persistOps({ updates: [listing], rebinds: [] });
+        if (msg) notify(listing.id, listing.title, msg);
+      }
     } catch {
-      // network error: retry next cycle
+      // network/storage error: retry next cycle
     }
     await sleep(BETWEEN_FETCHES_MS);
   }
-  // Merge into a fresh read: the user may have tracked/untracked listings
-  // while this cycle was sleeping between fetches.
-  const fresh = await getTracked();
-  await saveTracked(applyCycleOps(fresh, ops));
-  await chrome.storage.local.set({ lastCheckAt: Date.now() });
+  try {
+    await chrome.storage.local.set({ lastCheckAt: Date.now() });
+  } catch {
+    // non-essential heartbeat
+  }
+}
+
+interface RelistResult {
+  op: CycleOps["rebinds"][number];
+  message: string | null;
 }
 
 /**
@@ -73,9 +101,9 @@ async function runCheck(): Promise<void> {
  */
 async function attemptRelist(
   listing: TrackedListing,
-  snapshot: Record<string, TrackedListing>,
+  claimed: Set<string>,
   settings: Settings,
-): Promise<CycleOps["rebinds"][number] | null> {
+): Promise<RelistResult | null> {
   // Relist search is Torget-only for now: mobility search URLs are per-subvertical
   // (mc, car, boat, ...) and the listing URL does not reveal which one.
   if (!listing.url.includes("/recommerce/forsale/")) return null;
@@ -90,7 +118,7 @@ async function attemptRelist(
     { credentials: "omit" },
   );
   if (!res.ok) return null;
-  const candidates = parseSearchHtml(await res.text()).filter((c) => !(c.id in snapshot));
+  const candidates = parseSearchHtml(await res.text()).filter((c) => !claimed.has(c.id));
   const match = findRelistMatch({ id: listing.id, title: listing.title, lastPrice }, candidates);
   if (!match) return null;
 
@@ -106,14 +134,17 @@ async function attemptRelist(
   };
   delete rebound.removedAt;
 
-  if (settings.notifyDrops || settings.notifyAll) {
-    const msg =
+  // Notification policy: a price increase only notifies under notifyAll;
+  // drops and same-price relists ride the default drops setting.
+  const increased = match.price > lastPrice;
+  let message: string | null = null;
+  if ((increased && settings.notifyAll) || (!increased && (settings.notifyDrops || settings.notifyAll))) {
+    message =
       match.price !== lastPrice
         ? `Lagt ut på nytt: ${formatPrice(lastPrice)} → ${formatPrice(match.price)}`
         : "Annonsen er lagt ut på nytt";
-    notify(match.id, rebound.title, msg);
   }
-  return { oldId: listing.id, listing: rebound };
+  return { op: { oldId: listing.id, listing: rebound }, message };
 }
 
 function notify(id: string, title: string, message: string): void {
@@ -128,7 +159,10 @@ function notify(id: string, title: string, message: string): void {
 chrome.notifications.onClicked.addListener((notificationId) => {
   void (async () => {
     const id = notificationId.replace("torgvakt-", "");
-    const listing = (await getTracked())[id];
+    const tracked = await getTracked();
+    // direct hit, or the entry was rebound after the notification was shown
+    const listing =
+      tracked[id] ?? Object.values(tracked).find((l) => l.relistedFrom?.includes(id));
     if (listing) void chrome.tabs.create({ url: listing.url });
     chrome.notifications.clear(notificationId);
   })();
