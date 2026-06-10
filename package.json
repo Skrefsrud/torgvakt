@@ -7,9 +7,12 @@
     "build": "node build.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "icons": "node tools/make-icons.mjs"
+    "icons": "node tools/make-icons.mjs",
+    "e2e": "playwright test",
+    "smoke": "node e2e/live-smoke.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/chrome": "^0.0.270",
     "@types/node": "^25.9.2",
     "esbuild": "^0.21.5",
