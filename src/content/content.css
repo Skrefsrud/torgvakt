@@ -1,1 +1,19 @@
-/* populated in Task 9 */
+#torgvakt-btn {
+  font: 600 14px/1 system-ui, sans-serif;
+  color: #16181d;
+  background: #e8b13f;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin: 8px 0;
+  cursor: pointer;
+  display: block;
+}
+#torgvakt-btn.torgvakt-active { background: #c7cdd8; }
+#torgvakt-btn.torgvakt-float {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 99999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
