@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "icons": "node tools/make-icons.mjs",
     "e2e": "playwright test",
-    "smoke": "node e2e/live-smoke.mjs"
+    "smoke": "node e2e/live-smoke.mjs",
+    "package": "node tools/package.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
