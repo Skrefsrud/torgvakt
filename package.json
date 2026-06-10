@@ -1,0 +1,20 @@
+{
+  "name": "torgvakt",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "icons": "node tools/make-icons.mjs"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.270",
+    "esbuild": "^0.21.5",
+    "jsdom": "^24.1.0",
+    "sharp": "^0.33.4",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}
