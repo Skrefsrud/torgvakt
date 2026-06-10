@@ -8,9 +8,10 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "icons": "node tools/make-icons.mjs",
-    "e2e": "playwright test",
+    "e2e": "playwright test e2e/popup.spec.ts",
     "smoke": "node e2e/live-smoke.mjs",
-    "package": "node tools/package.mjs"
+    "package": "node tools/package.mjs",
+    "e2e:live": "playwright test e2e/journey.spec.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
