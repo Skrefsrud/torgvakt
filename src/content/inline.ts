@@ -15,7 +15,7 @@ export function renderInlineHistory(listing: TrackedListing): void {
   const max = Math.max(...prices);
   const change = priceChange(listing.history);
   const changeText = change
-    ? `${change.abs < 0 ? "" : "+"}${formatPrice(change.abs)} (${change.pct}%) siden du begynte å følge`
+    ? `${change.abs < 0 ? "-" : "+"}${formatPrice(Math.abs(change.abs))} (${change.pct}%) siden du begynte å følge`
     : "Ingen prisendring registrert ennå";
 
   panel.innerHTML = `

@@ -14,7 +14,7 @@ export function renderListingItem(l: TrackedListing): string {
   const current = l.history[l.history.length - 1];
   const change = priceChange(l.history);
   const changeHtml = change
-    ? `<span class="tv-change ${change.abs < 0 ? "tv-down" : "tv-up"}">${change.abs < 0 ? "" : "+"}${change.abs.toLocaleString("nb-NO").replace(/[\u00a0\u202f]/g, " ")} kr (${change.pct}%)</span>`
+    ? `<span class="tv-change ${change.abs < 0 ? "tv-down" : "tv-up"}">${change.abs < 0 ? "-" : "+"}${Math.abs(change.abs).toLocaleString("nb-NO").replace(/[\u00a0\u202f]/g, " ")} kr (${change.pct}%)</span>`
     : `<span class="tv-change">ingen endring</span>`;
   const badge = statusLabel(l.status);
   return `
