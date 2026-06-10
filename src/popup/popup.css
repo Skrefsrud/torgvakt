@@ -10,7 +10,7 @@ h1 { font-size: 16px; margin: 0; color: #e8b13f; }
 .tv-priceline { display: flex; gap: 8px; align-items: baseline; }
 .tv-change.tv-down { color: #5fbf77; }
 .tv-change.tv-up { color: #d96c6c; }
-.tv-badge { background: #3a3f4b; border-radius: 4px; padding: 1px 6px; font-size: 11px; }
+.tv-badge { background: #3a3f4b; border-radius: 4px; padding: 1px 6px; font-size: 11px; white-space: nowrap; }
 .tv-inactive { opacity: 0.55; }
 .tv-remove { background: none; border: none; color: #7c8494; cursor: pointer; font-size: 14px; }
 .tv-remove:hover { color: #d96c6c; }
