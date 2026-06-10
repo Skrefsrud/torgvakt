@@ -8,7 +8,10 @@
   "background": { "service_worker": "background.js" },
   "content_scripts": [
     {
-      "matches": ["https://www.finn.no/recommerce/forsale/item/*"],
+      "matches": [
+        "https://www.finn.no/recommerce/forsale/item/*",
+        "https://www.finn.no/mobility/item/*"
+      ],
       "js": ["content.js"],
       "css": ["content.css"]
     }

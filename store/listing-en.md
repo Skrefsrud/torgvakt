@@ -6,7 +6,8 @@ Price history charts and price-change alerts for FINN.no listings - including ch
 
 # Description
 FINN only notifies you when a favorite drops 5% or more, and never shows the
-history. Torgvakt fills the gap: tap "Følg pris" on any Torget listing to get a
+history. Torgvakt fills the gap: tap "Følg pris" on any Torget or vehicle (MC,
+car, boat) listing to get a
 price history chart, alerts on every price change (including small ones and
 increases), and a heads-up when the listing is sold or removed. Unique: when a
 seller deletes and reposts a listing (which breaks FINN favorites), Torgvakt

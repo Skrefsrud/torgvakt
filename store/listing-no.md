@@ -7,7 +7,7 @@ Prishistorikk på FINN-annonser. Se hvordan prisen har endret seg, og få varsel
 # Beskrivelse
 FINN varsler deg bare når en favoritt faller 5 % eller mer i pris - og viser aldri historikken. Og når selgeren sletter annonsen og legger den ut på nytt, mister FINN-favoritten din sporet helt. Torgvakt gjør resten:
 
-- Trykk «Følg pris» på en hvilken som helst Torget-annonse
+- Trykk «Følg pris» på annonser på Torget og kjøretøy (MC, bil, båt m.m.)
 - Se prishistorikk med graf, både på annonsesiden og i oversikten
 - Få varsel ved ALLE prisendringer, også små justeringer og prisøkninger
 - UNIKT: Torgvakt finner annonsen igjen når den slettes og legges ut på nytt, og beholder hele prishistorikken

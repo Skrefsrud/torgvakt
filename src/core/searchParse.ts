@@ -6,8 +6,9 @@ export interface SearchItem {
   url: string;
 }
 
+import { ITEM_PATH_RE } from "./listingId";
+
 const LD_JSON_RE = /<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/g;
-const ITEM_ID_RE = /\/recommerce\/forsale\/item\/(\d+)/;
 
 interface LdListItem {
   item?: {
@@ -40,7 +41,7 @@ export function parseSearchHtml(html: string): SearchItem[] {
     for (const el of elements) {
       const p = el.item;
       if (!p?.url || !p.name) continue;
-      const idMatch = p.url.match(ITEM_ID_RE);
+      const idMatch = p.url.match(ITEM_PATH_RE);
       const price = toPrice(p.offers?.price);
       if (!idMatch || price === null) continue;
       items.push({

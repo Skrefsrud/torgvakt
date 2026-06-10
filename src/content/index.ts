@@ -1,4 +1,5 @@
 import { parseListingHtml } from "../core/parse";
+import { listingIdFromPath } from "../core/listingId";
 import { canTrack } from "../core/limits";
 import { getTracked, trackListing, untrackListing } from "../shared/storage";
 import type { ParsedListing, TrackedListing } from "../shared/types";
@@ -15,7 +16,10 @@ const BTN_FLOAT =
 
 async function main(): Promise<void> {
   const parsed = parseListingHtml(document.documentElement.outerHTML);
-  if (!parsed || !parsed.id || parsed.price === null) return;
+  if (!parsed || parsed.price === null) return;
+  // Mobility listings have no sku in their JSON-LD; the URL is canonical there.
+  parsed.id = parsed.id || listingIdFromPath(location.pathname);
+  if (!parsed.id) return;
   const tracked = await getTracked();
   renderButton(parsed, parsed.id in tracked);
   const existing = tracked[parsed.id];

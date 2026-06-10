@@ -69,6 +69,9 @@ async function attemptRelist(
   tracked: Record<string, TrackedListing>,
   settings: Settings,
 ): Promise<void> {
+  // Relist search is Torget-only for now: mobility search URLs are per-subvertical
+  // (mc, car, boat, ...) and the listing URL does not reveal which one.
+  if (!listing.url.includes("/recommerce/forsale/")) return;
   if (listing.removedAt === undefined || Date.now() - listing.removedAt >= RELIST_WINDOW_MS) return;
   const lastPrice = listing.history[listing.history.length - 1]?.price;
   if (lastPrice === undefined) return;
