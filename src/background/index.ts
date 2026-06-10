@@ -1,4 +1,5 @@
 import { applyFetchResult } from "../core/check";
+import { applyCycleOps, type CycleOps } from "../core/merge";
 import { appendIfChanged, formatPrice } from "../core/history";
 import { buildSearchQuery, findRelistMatch } from "../core/relist";
 import { parseSearchHtml } from "../core/searchParse";
@@ -34,9 +35,10 @@ function isDead(l: TrackedListing): boolean {
 }
 
 async function runCheck(): Promise<void> {
-  const tracked = await getTracked();
+  const snapshot = await getTracked();
   const settings = await getSettings();
-  for (const listing of Object.values(tracked)) {
+  const ops: CycleOps = { updates: [], rebinds: [] };
+  for (const listing of Object.values(snapshot)) {
     const checkable = listing.status === "active" || listing.status === "parseError";
     const relistWindowOpen =
       listing.removedAt !== undefined && Date.now() - listing.removedAt < RELIST_WINDOW_MS;
@@ -49,13 +51,18 @@ async function runCheck(): Promise<void> {
         if (msg) notify(listing.id, listing.title, msg);
         if (isDead(listing) && listing.removedAt === undefined) listing.removedAt = Date.now();
       }
-      if (isDead(listing)) await attemptRelist(listing, tracked, settings);
+      const rebind = isDead(listing) ? await attemptRelist(listing, snapshot, settings) : null;
+      if (rebind) ops.rebinds.push(rebind);
+      else ops.updates.push(listing);
     } catch {
       // network error: retry next cycle
     }
     await sleep(BETWEEN_FETCHES_MS);
   }
-  await saveTracked(tracked);
+  // Merge into a fresh read: the user may have tracked/untracked listings
+  // while this cycle was sleeping between fetches.
+  const fresh = await getTracked();
+  await saveTracked(applyCycleOps(fresh, ops));
   await chrome.storage.local.set({ lastCheckAt: Date.now() });
 }
 
@@ -66,28 +73,27 @@ async function runCheck(): Promise<void> {
  */
 async function attemptRelist(
   listing: TrackedListing,
-  tracked: Record<string, TrackedListing>,
+  snapshot: Record<string, TrackedListing>,
   settings: Settings,
-): Promise<void> {
+): Promise<CycleOps["rebinds"][number] | null> {
   // Relist search is Torget-only for now: mobility search URLs are per-subvertical
   // (mc, car, boat, ...) and the listing URL does not reveal which one.
-  if (!listing.url.includes("/recommerce/forsale/")) return;
-  if (listing.removedAt === undefined || Date.now() - listing.removedAt >= RELIST_WINDOW_MS) return;
+  if (!listing.url.includes("/recommerce/forsale/")) return null;
+  if (listing.removedAt === undefined || Date.now() - listing.removedAt >= RELIST_WINDOW_MS) return null;
   const lastPrice = listing.history[listing.history.length - 1]?.price;
-  if (lastPrice === undefined) return;
+  if (lastPrice === undefined) return null;
   const query = buildSearchQuery(listing.title);
-  if (!query) return;
+  if (!query) return null;
 
   const res = await fetch(
     `https://www.finn.no/recommerce/forsale/search?q=${encodeURIComponent(query)}&sort=PUBLISHED_DESC`,
     { credentials: "omit" },
   );
-  if (!res.ok) return;
-  const candidates = parseSearchHtml(await res.text()).filter((c) => !(c.id in tracked));
+  if (!res.ok) return null;
+  const candidates = parseSearchHtml(await res.text()).filter((c) => !(c.id in snapshot));
   const match = findRelistMatch({ id: listing.id, title: listing.title, lastPrice }, candidates);
-  if (!match) return;
+  if (!match) return null;
 
-  delete tracked[listing.id];
   const rebound: TrackedListing = {
     ...listing,
     id: match.id,
@@ -99,7 +105,6 @@ async function attemptRelist(
     relistedFrom: [...(listing.relistedFrom ?? []), listing.id],
   };
   delete rebound.removedAt;
-  tracked[match.id] = rebound;
 
   if (settings.notifyDrops || settings.notifyAll) {
     const msg =
@@ -108,6 +113,7 @@ async function attemptRelist(
         : "Annonsen er lagt ut på nytt";
     notify(match.id, rebound.title, msg);
   }
+  return { oldId: listing.id, listing: rebound };
 }
 
 function notify(id: string, title: string, message: string): void {
