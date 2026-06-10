@@ -6,8 +6,24 @@ export function statusLabel(status: ListingStatus): string {
   return { active: "", sold: "Solgt", removed: "Fjernet", parseError: "Lesefeil" }[status];
 }
 
-function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+function esc(s: unknown): string {
+  return String(typeof s === "string" ? s : "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+}
+
+/**
+ * Renders the whole list, isolating each entry: one corrupt stored listing
+ * must degrade to a single broken row, never a blank dashboard.
+ */
+export function renderListingList(listings: TrackedListing[]): string {
+  return listings
+    .map((l) => {
+      try {
+        return renderListingItem(l);
+      } catch {
+        return `<li class="tv-item tv-broken"><div class="tv-mid">${esc(l.title)} (kan ikke vises)</div><button class="tv-remove" data-id="${esc(l.id)}" title="Fjern">✕</button></li>`;
+      }
+    })
+    .join("");
 }
 
 export function renderListingItem(l: TrackedListing): string {
@@ -19,7 +35,7 @@ export function renderListingItem(l: TrackedListing): string {
   const badge = statusLabel(l.status);
   return `
   <li class="tv-item ${l.status !== "active" ? "tv-inactive" : ""}">
-    ${l.image ? `<img src="${esc(l.image)}" alt="">` : `<div class="tv-noimg"></div>`}
+    ${typeof l.image === "string" && l.image ? `<img src="${esc(l.image)}" alt="">` : `<div class="tv-noimg"></div>`}
     <div class="tv-mid">
       <a href="${esc(l.url)}" target="_blank" rel="noreferrer">${esc(l.title)}</a>
       <div class="tv-priceline">

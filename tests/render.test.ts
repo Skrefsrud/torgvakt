@@ -1,4 +1,4 @@
-import { renderListingItem, statusLabel } from "../src/popup/render";
+import { renderListingItem, renderListingList, statusLabel } from "../src/popup/render";
 import type { TrackedListing } from "../src/shared/types";
 
 const base: TrackedListing = {
@@ -31,4 +31,16 @@ test("shows relist badge when listing was rebound", () => {
 test("escapes html in titles", () => {
   const html = renderListingItem({ ...base, title: "<img onerror=x>" });
   expect(html).not.toContain("<img onerror");
+});
+
+test("survives a corrupt entry with non-string image (legacy mobility bug)", () => {
+  const corrupt = { ...base, image: [{ contentUrl: "https://a/b.jpg" }] as unknown as string };
+  expect(() => renderListingItem(corrupt)).not.toThrow();
+});
+
+test("renderListingList isolates a throwing entry instead of blanking the list", () => {
+  const broken = { ...base, id: "2", history: [] }; // no points -> renderListingItem throws
+  const html = renderListingList([base, broken]);
+  expect(html).toContain("Sykkel");
+  expect(html).toContain("tv-broken");
 });

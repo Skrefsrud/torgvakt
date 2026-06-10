@@ -2,12 +2,21 @@ import type { ParsedListing } from "../shared/types";
 
 const LD_JSON_RE = /<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/g;
 
+type LdImage = string | { url?: string; contentUrl?: string };
+
 interface LdProduct {
   "@type"?: string | string[];
   sku?: string;
   name?: string;
-  image?: string | string[];
+  image?: LdImage | LdImage[];
   offers?: { price?: string | number; availability?: string };
+}
+
+// Torget uses plain URL strings; mobility uses ImageObject (sometimes arrays of either).
+function toImage(raw: LdImage | LdImage[] | undefined): string {
+  const first = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof first === "string") return first;
+  return first?.contentUrl ?? first?.url ?? "";
 }
 
 function findProduct(node: unknown): LdProduct | null {
@@ -58,7 +67,7 @@ export function parseListingHtml(html: string): ParsedListing | null {
     return {
       id: p.sku ?? "",
       title: p.name ?? "",
-      image: Array.isArray(p.image) ? p.image[0] ?? "" : p.image ?? "",
+      image: toImage(p.image),
       price: toPrice(p.offers?.price),
       availability: avail.includes("InStock")
         ? "InStock"

@@ -15,6 +15,12 @@ test("parses MC listing JSON-LD (numeric price, no sku)", () => {
   expect(p!.id).toBe(""); // mobility Products carry no sku; id comes from the URL
 });
 
+test("image is always a string, even for mobility ImageObject arrays", () => {
+  const p = parseListingHtml(mcItem);
+  expect(typeof p!.image).toBe("string");
+  expect(p!.image).toContain("finncdn.no");
+});
+
 test("listingIdFromPath extracts id for both verticals", () => {
   expect(listingIdFromPath("/recommerce/forsale/item/466564665")).toBe("466564665");
   expect(listingIdFromPath("/mobility/item/465836254")).toBe("465836254");

@@ -1,5 +1,5 @@
 import { getSettings, getTracked, saveSettings, untrackListing } from "../shared/storage";
-import { renderListingItem } from "./render";
+import { renderListingList } from "./render";
 import type { Settings } from "../shared/types";
 
 async function refresh(): Promise<void> {
@@ -7,7 +7,7 @@ async function refresh(): Promise<void> {
   const list = document.getElementById("tv-list") as HTMLUListElement;
   const empty = document.getElementById("tv-empty") as HTMLParagraphElement;
   const count = document.getElementById("tv-count") as HTMLSpanElement;
-  list.innerHTML = tracked.map(renderListingItem).join("");
+  list.innerHTML = renderListingList(tracked);
   empty.hidden = tracked.length > 0;
   count.textContent = tracked.length ? `${tracked.length} fulgt` : "";
   for (const btn of list.querySelectorAll<HTMLButtonElement>(".tv-remove")) {
