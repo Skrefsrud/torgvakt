@@ -1,5 +1,30 @@
 <!doctype html>
 <html lang="no">
-<head><meta charset="utf-8"><link rel="stylesheet" href="popup.css"></head>
-<body><div id="app"></div><script src="popup.js"></script></body>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <h1>Torgvakt</h1>
+    <span id="tv-count"></span>
+  </header>
+  <ul id="tv-list"></ul>
+  <p id="tv-empty" hidden>
+    Du følger ingen annonser ennå.<br>
+    Åpne en annonse på FINN Torget og trykk «Følg pris».
+  </p>
+  <section id="tv-settings">
+    <label>Sjekk priser
+      <select id="tv-interval">
+        <option value="1">hver time</option>
+        <option value="6" selected>hver 6. time</option>
+        <option value="24">daglig</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="tv-drops" checked> Varsle ved prisfall</label>
+    <label><input type="checkbox" id="tv-all"> Varsle ved alle endringer</label>
+  </section>
+  <script src="popup.js"></script>
+</body>
 </html>

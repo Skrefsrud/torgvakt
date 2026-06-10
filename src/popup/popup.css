@@ -1,1 +1,19 @@
-/* populated in Task 13 */
+body { width: 420px; margin: 0; font: 13px/1.45 system-ui, sans-serif; background: #16181d; color: #c7cdd8; }
+header { display: flex; align-items: baseline; gap: 8px; padding: 12px 14px 6px; }
+h1 { font-size: 16px; margin: 0; color: #e8b13f; }
+#tv-count { color: #7c8494; }
+#tv-list { list-style: none; margin: 0; padding: 0 8px; max-height: 420px; overflow-y: auto; }
+.tv-item { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-top: 1px solid #23262e; }
+.tv-item img, .tv-noimg { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; background: #23262e; flex: none; }
+.tv-mid { flex: 1; min-width: 0; }
+.tv-mid a { color: #e6e9ef; text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-priceline { display: flex; gap: 8px; align-items: baseline; }
+.tv-change.tv-down { color: #5fbf77; }
+.tv-change.tv-up { color: #d96c6c; }
+.tv-badge { background: #3a3f4b; border-radius: 4px; padding: 1px 6px; font-size: 11px; }
+.tv-inactive { opacity: 0.55; }
+.tv-remove { background: none; border: none; color: #7c8494; cursor: pointer; font-size: 14px; }
+.tv-remove:hover { color: #d96c6c; }
+#tv-empty { padding: 16px 14px; color: #7c8494; }
+#tv-settings { border-top: 1px solid #23262e; padding: 10px 14px 14px; display: grid; gap: 6px; }
+#tv-settings select { margin-left: 6px; background: #23262e; color: #e6e9ef; border: 1px solid #3a3f4b; border-radius: 4px; }
